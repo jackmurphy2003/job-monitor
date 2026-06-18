@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import smtplib
 from datetime import datetime, timezone
@@ -85,12 +86,15 @@ ADAPTERS = {
 def matches(job, keywords, locations):
     title = job["title"].lower()
     loc = job["location"].lower()
-    if keywords:
-        if not any(k.strip().lower() in title for k in keywords if k.strip()):
-            return False
-    if locations:
-        if not any(l.strip().lower() in loc for l in locations if l.strip()):
-            return False
+
+    def hit(term, text):
+        term = term.strip().lower()
+        return bool(term) and re.search(r"\b" + re.escape(term) + r"\b", text)
+
+    if keywords and not any(hit(k, title) for k in keywords):
+        return False
+    if locations and not any(hit(l, loc) for l in locations):
+        return False
     return True
 
 
